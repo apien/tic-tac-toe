@@ -1,2 +1,14 @@
 *.class
 *.log
+
+
+# Specific for sbt
+.cache
+.history
+.lib/
+dist/*
+target/
+
+# Specific for Intellij IDEA
+.run
+.idea

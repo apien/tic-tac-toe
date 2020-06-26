@@ -21,25 +21,32 @@ import scala.concurrent.ExecutionContext.global
 
 object QuickstartServer {
 
-  def stream(implicit time: Timer[Task], contextShift: ContextShift[Task], concurrentEffect: ConcurrentEffect[Task], scheduler: Scheduler): Stream[Task, Nothing] = {
+  def stream(
+      implicit time: Timer[Task],
+      contextShift: ContextShift[Task],
+      concurrentEffect: ConcurrentEffect[Task],
+      scheduler: Scheduler
+  ): Stream[Task, Nothing] = {
     for {
       gameRepository <- Stream(new GameInMemoryRepository(Map()))
       gameService <- Stream(new GameService(gameRepository))
       gameRouter <- Stream.apply(new GameApi(gameService))
       //
       // generating the documentation in yml; extension methods come from imported packages
-      openApiDocs: OpenAPI = List(gameRouter.addGame, gameRouter.joinGame).toOpenAPI("The tapir library", "1.0.0")
+      openApiDocs: OpenAPI = List(gameRouter.addGame, gameRouter.joinGame)
+        .toOpenAPI("The tapir library", "1.0.0")
       openApiYml: String = openApiDocs.toYaml
 
       // Combine Service Routes into an HttpApp.
       // Can also be done via a Router if you
       // want to extract a segments not checked
       // in the underlying routes.
-      cos = Router("/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> new SwaggerHttp4s(openApiYml).routes[Task])).orNotFound
+      cos = Router(
+        "/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> new SwaggerHttp4s(
+          openApiYml).routes[Task])).orNotFound
 
       // With Middlewares in place
       //                                                             finalHttpApp = Logger.httpApp(true, true)(httpApp)
-
 
       exitCode <- BlazeServerBuilder[Task](global)
         .bindHttp(8080, "0.0.0.0")

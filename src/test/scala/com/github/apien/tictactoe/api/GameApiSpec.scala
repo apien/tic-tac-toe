@@ -17,9 +17,7 @@ class GameApiSpec extends TtcSpec with MockFactory {
     (gameServiceMock.createNew _).expects().returning(Task("game1", "player1"))
     val routes = new GameApi(gameServiceMock)
 
-    val response = routes
-      .addGameRoutes
-      .orNotFound
+    val response = routes.addGameRoutes.orNotFound
       .run(Request(method = Method.POST, uri = uri"/api/games"))
       .runSyncUnsafe()
 

@@ -25,6 +25,7 @@ lazy val root = (project in file("."))
       tapirCircle,
       monix,
       circleLiteral,
+      circleGenericExtras,
       "ch.qos.logback" % "logback-classic" % LogbackVersion,
       scalaTest % Test,
       scalaMock % Test

@@ -1,10 +1,13 @@
 package com.github.apien.tictactoe
 
-import cats.effect.{ConcurrentEffect, ContextShift, Timer}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Timer}
 import cats.implicits._
 import com.github.apien.tictactoe.api.GameApi
-import com.github.apien.tictactoe.domain.{GameRepository, GameService}
-import com.github.apien.tictactoe.integration.GameInMemoryRepository
+import com.github.apien.tictactoe.config.TtcConfig
+import com.github.apien.tictactoe.domain.GameService
+import com.github.apien.tictactoe.integration.GameSqlRepository
+import doobie.util.ExecutionContexts
+import doobie.util.transactor.Transactor
 import fs2.Stream
 import monix.eval.Task
 import monix.execution.Scheduler
@@ -16,9 +19,7 @@ import sttp.tapir.openapi.OpenAPI
 import sttp.tapir.openapi.circe.yaml._
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
 
-import collection.mutable.Map
 import scala.concurrent.ExecutionContext.global
-
 object QuickstartServer {
 
   def stream(
@@ -27,9 +28,22 @@ object QuickstartServer {
       concurrentEffect: ConcurrentEffect[Task],
       scheduler: Scheduler
   ): Stream[Task, Nothing] = {
+
     for {
-      gameRepository <- Stream(new GameInMemoryRepository(Map()))
-      gameService <- Stream(new GameService(gameRepository))
+      config <- Stream(TtcConfig.load)
+      tran <- Stream(
+        Transactor.fromDriverManager[Task](
+          "org.postgresql.Driver",
+          s"jdbc:postgresql://${config.db.host}:${config.db.port}/${config.db.database}",
+          config.db.user,
+          config.db.password,
+          Blocker.liftExecutionContext(
+            ExecutionContexts.synchronous
+          )
+        )
+      )
+      gameRepository <- Stream(new GameSqlRepository())
+      gameService <- Stream(new GameService(gameRepository, tran))
       gameRouter <- Stream.apply(new GameApi(gameService))
       //
       // generating the documentation in yml; extension methods come from imported packages
@@ -43,7 +57,9 @@ object QuickstartServer {
       // in the underlying routes.
       cos = Router(
         "/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> new SwaggerHttp4s(
-          openApiYml).routes[Task])).orNotFound
+          openApiYml
+        ).routes[Task])
+      ).orNotFound
 
       // With Middlewares in place
       //                                                             finalHttpApp = Logger.httpApp(true, true)(httpApp)

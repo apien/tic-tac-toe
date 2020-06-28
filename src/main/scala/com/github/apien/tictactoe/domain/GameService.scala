@@ -10,9 +10,12 @@ import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{
   GameNoFreeSlot,
   GameNotExist
 }
+import doobie.util.transactor.Transactor
 import monix.execution.Scheduler;
-
-class GameService(gameRepository: GameRepository) {
+import doobie._
+import doobie.implicits._
+import cats.syntax.applicative._
+class GameService(gameRepository: GameRepository, xa: Transactor[Task]) {
 
   /**
     * Create a new game.
@@ -21,13 +24,17 @@ class GameService(gameRepository: GameRepository) {
     */
   def createNew: Task[(GameId, PlayerId)] =
     for {
-      game <- gameRepository.create(GameId(UUID.randomUUID().toString),
-                                    PlayerId(UUID.randomUUID().toString))
+      game <- gameRepository
+        .create(
+          GameId(UUID.randomUUID().toString),
+          PlayerId(UUID.randomUUID().toString)
+        )
+        .transact(xa)
     } yield (game.id, game.owner)
 
   def joinPlayer(gameId: GameId)(
-      implicit s: Scheduler): Task[Either[PlayerJoinError, PlayerId]] =
-    for {
+      implicit s: Scheduler): Task[Either[PlayerJoinError, PlayerId]] = {
+    val op = for {
       validationResult <- validateGame(gameId)
       playerId = PlayerId(UUID.randomUUID().toString)
       result <- validationResult match {
@@ -36,14 +43,18 @@ class GameService(gameRepository: GameRepository) {
             .joinPlayer(game.id, playerId)
             .map {
               _.fold[Either[PlayerJoinError, PlayerId]](GameNotExist().asLeft)(
-                _ => playerId.asRight)
+                _ => playerId.asRight
+              )
             }
-        case Left(error) => Task(error.asLeft[PlayerId])
+        case Left(error) => error.asLeft[PlayerId].pure[ConnectionIO]
       }
     } yield result
+    op.transact(xa)
+  }
 
   private def validateGame(
-      gameId: GameId): Task[Either[PlayerJoinError, Game]] =
+      gameId: GameId
+  ): ConnectionIO[Either[PlayerJoinError, Game]] =
     gameRepository
       .findById(gameId)
       .map {

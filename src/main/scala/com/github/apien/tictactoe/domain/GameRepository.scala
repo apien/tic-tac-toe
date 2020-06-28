@@ -1,7 +1,7 @@
 package com.github.apien.tictactoe.domain
 
 import com.github.apien.tictactoe.domain.model.{Game, GameId, PlayerId}
-import monix.eval.Task
+import doobie.ConnectionIO
 
 trait GameRepository {
 
@@ -12,7 +12,7 @@ trait GameRepository {
     * @param ownerId Id of owner of the game.
     * @return -.
     */
-  def create(gameId: GameId, ownerId: PlayerId): Task[Game]
+  def create(gameId: GameId, ownerId: PlayerId): ConnectionIO[Game]
 
   /**
     * Find [[Game]] by id.
@@ -20,7 +20,7 @@ trait GameRepository {
     * @param gameId Id of demanded game.
     * @return Found game.
     */
-  def findById(gameId: GameId): Task[Option[Game]];
+  def findById(gameId: GameId): ConnectionIO[Option[Game]]
 
   /**
     * Allows for guest to join to the existing game.
@@ -29,14 +29,14 @@ trait GameRepository {
     * @param guest  Id of the guest id.
     * @return
     */
-  def joinPlayer(gameId: GameId, guest: PlayerId): Task[Option[Game]]
+  def joinPlayer(gameId: GameId, guest: PlayerId): ConnectionIO[Option[Game]]
 
   /**
     * Get all available games.
     *
     * @return -.
     */
-  def getAll: Task[List[Game]]
+  def getAll: ConnectionIO[List[Game]]
 }
 
 object GameRepository {

@@ -26,17 +26,19 @@ lazy val root = (project in file("."))
       monix,
       circleLiteral,
       circleGenericExtras,
+      pureConfig,
       "ch.qos.logback" % "logback-classic" % LogbackVersion,
       scalaTest % Test,
       scalaMock % Test
-    ),
+    ) ++ doobie,
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
     addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
   )
 
 scalacOptions ++= Seq(
   "-deprecation",
-  "-encoding", "UTF-8",
+  "-encoding",
+  "UTF-8",
   "-language:higherKinds",
   "-language:postfixOps",
   "-feature",

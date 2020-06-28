@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+    doobie_db_native:
+        image: postgres:12.3
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: tajne
+        ports: 
+            - 15432:5432

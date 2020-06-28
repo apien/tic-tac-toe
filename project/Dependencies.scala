@@ -1,6 +1,7 @@
 import sbt._
 
 object Dependencies {
+  lazy val doobieVersion = "0.8.8"
 
   lazy val tapir = "com.softwaremill.sttp.tapir" %% "tapir-core" % "0.16.1"
   lazy val tapirHttp4s = "com.softwaremill.sttp.tapir" %% "tapir-http4s-server" % "0.16.1"
@@ -11,6 +12,13 @@ object Dependencies {
   lazy val circleLiteral = "io.circe" %% "circe-literal" % "0.13.0"
   lazy val circleGenericExtras = "io.circe" %% "circe-generic-extras" % "0.13.0"
   lazy val monix = "io.monix" %% "monix" % "3.2.2"
+  lazy val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.13.0"
+
+  lazy val doobie = Seq(
+    "org.tpolecat" %% "doobie-core" % doobieVersion,
+    "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+    "org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test
+  )
 
   lazy val scalaTest = "org.scalatest" % "scalatest_2.13" % "3.2.0"
   lazy val scalaMock = "org.scalamock" %% "scalamock" % "4.4.0"

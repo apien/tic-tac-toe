@@ -1,7 +1,8 @@
 package com.github.apien.tictactoe.integration
 
-import com.github.apien.tictactoe.domain.model.Game
+import com.github.apien.tictactoe.domain.model.{Game, GameId, PlayerId}
 import com.github.apien.tictactoe.domain.{GameRepository, model}
+import com.github.apien.tictactoe.integration.GameSqlRepository.GameQueries
 import doobie._
 import doobie.implicits._
 
@@ -13,26 +14,38 @@ class GameSqlRepository extends GameRepository {
       gameId: model.GameId,
       ownerId: model.PlayerId
   ): ConnectionIO[Game] =
-    sql"insert into game(id, owner_id) values ($gameId, $ownerId)".update
-      .withUniqueGeneratedKeys("id", "owner_id", "guest_id")
+    GameQueries
+      .insert(gameId, ownerId)
+      .withUniqueGeneratedKeys("id", "owner_id", "guest_id", "winner_id")
 
-  def findById(gameId: model.GameId): ConnectionIO[Option[Game]] =
-    sql"select id, owner_id, guest_id from game where id = $gameId"
-      .query[Game]
-      .option
+  def findById(gameId: model.GameId): ConnectionIO[Option[Game]] = GameQueries.findById(gameId).option
 
   def joinPlayer(
       gameId: model.GameId,
       guest: model.PlayerId
   ): ConnectionIO[Option[Game]] =
-    sql"update game set guest_id = $guest where id = $gameId".update
-      .withGeneratedKeys[Game]("id", "owner_id", "guest_id")
+    GameQueries
+      .joinPlayer(gameId, guest)
+      .withGeneratedKeys[Game]("id", "owner_id", "guest_id", "winner_id")
       .head
       .compile
       .last
 
-  def getAll: ConnectionIO[List[Game]] =
-    sql"select id, owner_id, guest_id from  game"
-      .query[Game]
-      .to[List]
+  def getAll: ConnectionIO[List[Game]] = GameQueries.getAll.to[List]
+}
+
+object GameSqlRepository {
+
+  object GameQueries {
+
+    val getAll: Query0[Game] = sql"select id, owner_id, guest_id, winner_id from  game".query[Game]
+
+    def insert(gameId: GameId, ownerId: PlayerId): Update0 = sql"insert into game(id, owner_id) values ($gameId, $ownerId)".update
+
+    def findById(gameId: GameId): Query0[Game] =
+      sql"select id, owner_id, guest_id, winner_id from game where id = $gameId"
+        .query[Game]
+
+    def joinPlayer(gameId: GameId, guestId: PlayerId): Update0 = sql"update game set guest_id = $guestId where id = $gameId".update
+  }
 }

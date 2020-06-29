@@ -26,7 +26,11 @@ lazy val root = (project in file("."))
       circleLiteral,
       circleGenericExtras,
       pureConfig,
+      flyway,
       "ch.qos.logback" % "logback-classic" % LogbackVersion,
+      testContainers % Test,
+      testContainersScalaTest % Test,
+      testContainersPostgreSQL % Test,
       scalaTest % Test,
       scalaMock % Test
     ) ++ doobie,

@@ -3,6 +3,7 @@ package com.github.apien.tictactoe.domain
 import cats.syntax.either._
 import com.github.apien.tictactoe.domain.GameEngine.{MoveError, SuccessMove}
 import com.github.apien.tictactoe.domain.model._
+import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
 
 /**
   * It implements of a game logic.
@@ -45,7 +46,7 @@ class GameEngine(game: Game, previousMoves: List[Move]) {
     if (previousMoves.isEmpty || previousMoves.maxBy(_.dateTime).playerId != playerId)
       ().asRight
     else
-      MoveError.NotPlayerTurn.asLeft
+      MoveError.NotPlayerTurn().asLeft
 
   private def validateStateAfterMove(moves: List[Move], move: Move): SuccessMove = {
     def isRowFinishGame(row: Row): Boolean = {
@@ -73,7 +74,7 @@ class GameEngine(game: Game, previousMoves: List[Move]) {
     if (isColumnFinishGame(move.coordinate.col) || isRowFinishGame(move.coordinate.row) || isDiagonalsFinishGame)
       SuccessMove.GameFinished(move.playerId)
     else
-      SuccessMove.GameInProgress
+      SuccessMove.GameInProgress()
 
   }
 
@@ -105,7 +106,7 @@ object GameEngine {
     /**
       * Given move is valid but it did not finish the game.
       */
-    case object GameInProgress extends SuccessMove
+    case class GameInProgress() extends SuccessMove
 
     /**
       * Given move is valid and it did finish the game.
@@ -121,10 +122,13 @@ object GameEngine {
 
   object MoveError {
 
+    import io.circe._
+    import io.circe.generic.auto._
+    import io.circe.syntax._
     /**
       * It is not turn of the user. Other user needs to make move.
       */
-    case object NotPlayerTurn extends MoveError
+    case class NotPlayerTurn() extends MoveError
 
     /**
       * One of the player already selected the field in one of the previous move.
@@ -141,6 +145,11 @@ object GameEngine {
       * @param playerId Id of user which finished game in previous move.
       */
     case class GameAlreadyFinished(playerId: PlayerId) extends MoveError
+
+    case class GameDoesNotExist() extends MoveError
+
+    implicit val successDecoder = deriveEnumerationDecoder[MoveError]
+    implicit val successsEncoder = deriveEnumerationEncoder[MoveError]
   }
 
 }

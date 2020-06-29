@@ -23,6 +23,15 @@ trait GameRepository {
   def findById(gameId: GameId): ConnectionIO[Option[Game]]
 
   /**
+    * Find [[Game]] by id and owner or guest id.
+    *
+    * @param gameId Id of demanded game.
+    * @param playerId Id of the player assinged to the game.
+    * @return Found game.
+    */
+  def findByIdAndPlayerId(gameId: GameId, playerId: PlayerId): ConnectionIO[Option[Game]]
+
+  /**
     * Allows for guest to join to the existing game.
     *
     * @param gameId Game id.
@@ -30,6 +39,8 @@ trait GameRepository {
     * @return
     */
   def joinPlayer(gameId: GameId, guest: PlayerId): ConnectionIO[Option[Game]]
+
+  def setWinner(game:GameId, playerId: PlayerId) : ConnectionIO[Option[Game]]
 
   /**
     * Get all available games.

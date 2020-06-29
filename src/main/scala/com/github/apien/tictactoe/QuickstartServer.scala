@@ -4,8 +4,8 @@ import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO, Timer}
 import cats.implicits._
 import com.github.apien.tictactoe.api.GameApi
 import com.github.apien.tictactoe.config.TtcConfig
-import com.github.apien.tictactoe.domain.GameService
-import com.github.apien.tictactoe.integration.GameSqlRepository
+import com.github.apien.tictactoe.domain.{GameService, MoveRepository}
+import com.github.apien.tictactoe.integration.{GameSqlRepository, MoveSqlRepository}
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import fs2.Stream
@@ -40,11 +40,12 @@ object QuickstartServer {
         )
       )
       gameRepository <- Stream(new GameSqlRepository())
-      gameService <- Stream(new GameService(gameRepository, tran))
+      moveRepository <- Stream(new MoveSqlRepository())
+      gameService <- Stream(new GameService(gameRepository, moveRepository, tran))
       gameRouter <- Stream.apply(new GameApi(gameService))
       //
       // generating the documentation in yml; extension methods come from imported packages
-      openApiDocs: OpenAPI = List(gameRouter.addGame, gameRouter.joinGame)
+      openApiDocs: OpenAPI = List(gameRouter.addGame, gameRouter.joinGame, gameRouter.makeMove)
         .toOpenAPI("The tapir library", "1.0.0")
       openApiYml: String = openApiDocs.toYaml
 
@@ -53,7 +54,7 @@ object QuickstartServer {
       // want to extract a segments not checked
       // in the underlying routes.
       cos = Router(
-        "/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> new SwaggerHttp4s(
+        "/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> gameRouter.makeMoveRoutes <+> new SwaggerHttp4s(
           openApiYml
         ).routes[IO])
       ).orNotFound

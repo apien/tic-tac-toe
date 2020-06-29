@@ -10,7 +10,7 @@ import doobie.implicits._
   * Implementation of [[GameRepository]] which persist data in PostgreSQL.
   */
 class GameSqlRepository extends GameRepository {
-  def create(
+  override def create(
       gameId: model.GameId,
       ownerId: model.PlayerId
   ): ConnectionIO[Game] =
@@ -18,9 +18,9 @@ class GameSqlRepository extends GameRepository {
       .insert(gameId, ownerId)
       .withUniqueGeneratedKeys("id", "owner_id", "guest_id", "winner_id")
 
-  def findById(gameId: model.GameId): ConnectionIO[Option[Game]] = GameQueries.findById(gameId).option
+  override def findById(gameId: model.GameId): ConnectionIO[Option[Game]] = GameQueries.findById(gameId).option
 
-  def joinPlayer(
+  override def joinPlayer(
       gameId: model.GameId,
       guest: model.PlayerId
   ): ConnectionIO[Option[Game]] =
@@ -31,7 +31,20 @@ class GameSqlRepository extends GameRepository {
       .compile
       .last
 
-  def getAll: ConnectionIO[List[Game]] = GameQueries.getAll.to[List]
+  override def getAll: ConnectionIO[List[Game]] = GameQueries.getAll.to[List]
+
+  override def findByIdAndPlayerId(gameId: GameId, playerId: PlayerId): ConnectionIO[Option[Game]] =
+    GameQueries
+      .findByIdAndOwnerOrPlayer(gameId, playerId)
+      .option
+
+  override def setWinner(gameId: GameId, playerId: PlayerId): ConnectionIO[Option[Game]] =
+    GameQueries
+      .setWinner(gameId, playerId)
+      .withGeneratedKeys[Game]("id", "owner_id", "guest_id", "winner_id")
+      .head
+      .compile
+      .last
 }
 
 object GameSqlRepository {
@@ -46,6 +59,21 @@ object GameSqlRepository {
       sql"select id, owner_id, guest_id, winner_id from game where id = $gameId"
         .query[Game]
 
+    def findByIdAndOwnerOrPlayer(gameId: GameId, playerId: PlayerId) =
+      sql"""
+           |select id, owner_id, guest_id, winner_id 
+           |from game
+           |where id = $gameId and (owner_id = $playerId or guest_id = $playerId)
+           |""".stripMargin
+        .query[Game]
+
     def joinPlayer(gameId: GameId, guestId: PlayerId): Update0 = sql"update game set guest_id = $guestId where id = $gameId".update
+
+    def setWinner(gameId: GameId, playerId: PlayerId): Update0 =
+      sql"""
+           |update game 
+           |set winner_id = $playerId
+           |where id = $gameId
+           |""".stripMargin.update
   }
 }

@@ -32,4 +32,9 @@ class GameInMemoryRepository(games: mutable.Map[GameId, Game])
 
   def findById(gameId: GameId): ConnectionIO[Option[Game]] =
     games.get(gameId).pure[ConnectionIO]
+
+
+  override def findByIdAndPlayerId(gameId: GameId, playerId: PlayerId): ConnectionIO[Option[Game]] = ???
+
+  override def setWinner(game:GameId, playerId: PlayerId) : ConnectionIO[Option[Game]] = ???
 }

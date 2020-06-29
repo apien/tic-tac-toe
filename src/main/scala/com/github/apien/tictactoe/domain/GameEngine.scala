@@ -1,8 +1,8 @@
 package com.github.apien.tictactoe.domain
 
+import cats.syntax.either._
 import com.github.apien.tictactoe.domain.GameEngine.{MoveError, SuccessMove}
 import com.github.apien.tictactoe.domain.model._
-import cats.syntax.either._
 
 /**
   * It implements of a game logic.

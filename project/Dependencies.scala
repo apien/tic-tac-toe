@@ -11,7 +11,6 @@ object Dependencies {
   lazy val tapirCircle = "com.softwaremill.sttp.tapir" %% "tapir-json-circe" % "0.16.1"
   lazy val circleLiteral = "io.circe" %% "circe-literal" % "0.13.0"
   lazy val circleGenericExtras = "io.circe" %% "circe-generic-extras" % "0.13.0"
-  lazy val monix = "io.monix" %% "monix" % "3.2.2"
   lazy val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.13.0"
 
   lazy val doobie = Seq(

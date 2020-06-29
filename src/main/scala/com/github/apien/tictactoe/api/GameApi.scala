@@ -1,18 +1,13 @@
 package com.github.apien.tictactoe.api
 
-import cats.effect.ContextShift
+import cats.effect.{ContextShift, IO}
 import cats.syntax.either._
 import com.github.apien.tictactoe.api.model.GameApiDto
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError
-import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{
-  GameNoFreeSlot,
-  GameNotExist
-}
+import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
 import com.github.apien.tictactoe.domain.GameService
 import com.github.apien.tictactoe.domain.model.GameId
 import io.circe.generic.semiauto._
-import monix.eval.Task
-import monix.execution.Scheduler
 import org.http4s.HttpRoutes
 import sttp.model.StatusCode
 import sttp.tapir.Codec.PlainCodec
@@ -20,8 +15,7 @@ import sttp.tapir._
 import sttp.tapir.json.circe._
 import sttp.tapir.server.http4s._
 
-class GameApi(gamesService: GameService)(implicit cs: ContextShift[Task],
-                                         s: Scheduler) {
+class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
 
   val addGame: Endpoint[Unit, Unit, GameApiDto, Nothing] = endpoint.post
     .description(
@@ -29,7 +23,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[Task],
     .in("api" / "games")
     .out(jsonBody[GameApiDto])
 
-  val addGameRoutes: HttpRoutes[Task] = addGame.toRoutes { _ =>
+  val addGameRoutes: HttpRoutes[IO] = addGame.toRoutes { _ =>
     gamesService.createNew
       .map {
         case (gameId, playerId) =>
@@ -55,7 +49,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[Task],
         )
       )
 
-  val joinGameRoutes: HttpRoutes[Task] = joinGame.toRoutes { gameId =>
+  val joinGameRoutes: HttpRoutes[IO] = joinGame.toRoutes { gameId =>
     gamesService
       .joinPlayer(gameId)
       .map {

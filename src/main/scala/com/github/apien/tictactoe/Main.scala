@@ -1,12 +1,9 @@
 package com.github.apien.tictactoe
 
-import cats.effect.ExitCode
-import cats.implicits._
-import monix.eval.TaskApp
+import cats.effect.{ExitCode, IO, IOApp}
 
-object Main extends TaskApp {
-  implicit val myScheduler = scheduler
+object Main extends IOApp {
 
-  def run(args: List[String]) =
+  def run(args: List[String]): IO[ExitCode] =
     QuickstartServer.stream.compile.drain.as(ExitCode.Success)
 }

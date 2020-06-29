@@ -23,7 +23,6 @@ lazy val root = (project in file("."))
       tapirOpenApiCircle,
       tapirHttp4sSwagger,
       tapirCircle,
-      monix,
       circleLiteral,
       circleGenericExtras,
       pureConfig,

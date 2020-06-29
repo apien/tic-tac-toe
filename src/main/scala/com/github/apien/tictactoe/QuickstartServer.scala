@@ -1,6 +1,6 @@
 package com.github.apien.tictactoe
 
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, Timer}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO, Timer}
 import cats.implicits._
 import com.github.apien.tictactoe.api.GameApi
 import com.github.apien.tictactoe.config.TtcConfig
@@ -9,8 +9,6 @@ import com.github.apien.tictactoe.integration.GameSqlRepository
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import fs2.Stream
-import monix.eval.Task
-import monix.execution.Scheduler
 import org.http4s.implicits._
 import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -23,16 +21,15 @@ import scala.concurrent.ExecutionContext.global
 object QuickstartServer {
 
   def stream(
-      implicit time: Timer[Task],
-      contextShift: ContextShift[Task],
-      concurrentEffect: ConcurrentEffect[Task],
-      scheduler: Scheduler
-  ): Stream[Task, Nothing] = {
+      implicit time: Timer[IO],
+      contextShift: ContextShift[IO],
+      concurrentEffect: ConcurrentEffect[IO]
+  ): Stream[IO, Nothing] = {
 
     for {
       config <- Stream(TtcConfig.load)
       tran <- Stream(
-        Transactor.fromDriverManager[Task](
+        Transactor.fromDriverManager[IO](
           "org.postgresql.Driver",
           s"jdbc:postgresql://${config.db.host}:${config.db.port}/${config.db.database}",
           config.db.user,
@@ -58,13 +55,13 @@ object QuickstartServer {
       cos = Router(
         "/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> new SwaggerHttp4s(
           openApiYml
-        ).routes[Task])
+        ).routes[IO])
       ).orNotFound
 
       // With Middlewares in place
       //                                                             finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
-      exitCode <- BlazeServerBuilder[Task](global)
+      exitCode <- BlazeServerBuilder[IO](global)
         .bindHttp(8080, "0.0.0.0")
         .withHttpApp(cos)
         .serve

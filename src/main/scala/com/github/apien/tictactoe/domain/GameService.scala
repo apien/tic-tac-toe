@@ -1,28 +1,24 @@
 package com.github.apien.tictactoe.domain
 
-import com.github.apien.tictactoe.domain.model.{Game, GameId, PlayerId}
-import monix.eval.Task
 import java.util.UUID
 
+import cats.effect.IO
+import cats.syntax.applicative._
 import cats.syntax.either._
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError
-import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{
-  GameNoFreeSlot,
-  GameNotExist
-}
-import doobie.util.transactor.Transactor
-import monix.execution.Scheduler;
+import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
+import com.github.apien.tictactoe.domain.model.{Game, GameId, PlayerId}
 import doobie._
 import doobie.implicits._
-import cats.syntax.applicative._
-class GameService(gameRepository: GameRepository, xa: Transactor[Task]) {
+import doobie.util.transactor.Transactor
+class GameService(gameRepository: GameRepository, xa: Transactor[IO]) {
 
   /**
     * Create a new game.
     *
     * @return Game and player identifiers.
     */
-  def createNew: Task[(GameId, PlayerId)] =
+  def createNew: IO[(GameId, PlayerId)] =
     for {
       game <- gameRepository
         .create(
@@ -32,8 +28,7 @@ class GameService(gameRepository: GameRepository, xa: Transactor[Task]) {
         .transact(xa)
     } yield (game.id, game.owner)
 
-  def joinPlayer(gameId: GameId)(
-      implicit s: Scheduler): Task[Either[PlayerJoinError, PlayerId]] = {
+  def joinPlayer(gameId: GameId): IO[Either[PlayerJoinError, PlayerId]] = {
     val op = for {
       validationResult <- validateGame(gameId)
       playerId = PlayerId(UUID.randomUUID().toString)

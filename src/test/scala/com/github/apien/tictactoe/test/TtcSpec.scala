@@ -1,9 +1,12 @@
 package com.github.apien.tictactoe.test
 
+import java.time.LocalDateTime
+
 import com.github.apien.tictactoe.domain.model.{GameId, PlayerId}
 import monix.execution.Scheduler
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+
 import scala.language.implicitConversions
 
 trait TtcSpec extends AnyFlatSpec with Matchers {
@@ -13,4 +16,6 @@ trait TtcSpec extends AnyFlatSpec with Matchers {
   implicit def stringToGameId(value: String): GameId = GameId(value)
 
   implicit def stringToPlayerId(value: String): PlayerId = PlayerId(value)
+
+  implicit def stringToLocalDateTime(value: String): LocalDateTime = LocalDateTime.parse(value)
 }

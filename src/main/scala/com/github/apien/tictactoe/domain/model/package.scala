@@ -6,4 +6,8 @@ package object model {
 
   case class PlayerId(value: String) extends AnyVal
 
+  case class Column(value : Int) extends AnyVal
+
+  case class Row(value: Int) extends AnyVal
+
 }

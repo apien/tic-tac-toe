@@ -13,7 +13,7 @@ class GameInMemoryRepository(games: mutable.Map[GameId, Game])
     extends GameRepository {
 
   def create(gameId: GameId, ownerId: PlayerId): ConnectionIO[Game] = {
-    val game = Game(gameId, ownerId, None)
+    val game = Game(gameId, ownerId, None, None)
     games += game.id -> game
     game
   }.pure[ConnectionIO]

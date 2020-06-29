@@ -61,7 +61,7 @@ class GameService(gameRepository: GameRepository, moveRepository: MoveRepository
       .findByIdAndPlayerId(gameId, playerId)
       .flatMap {
         case None =>
-          (GameDoesNotExist(): MoveError).asLeft[SuccessMove].pure[ConnectionIO]
+          (GameDoesNotExist: MoveError).asLeft[SuccessMove].pure[ConnectionIO]
         case Some(game) =>
           for {
             gameMoves <- moveRepository.getAllForGame(gameId)
@@ -92,8 +92,8 @@ class GameService(gameRepository: GameRepository, moveRepository: MoveRepository
     for {
       _ <- moveRepository.insert(move)
       _ <- result match {
-        case SuccessMove.GameFinished(playerId) => gameRepository.setWinner(gameId, playerId)
-        case SuccessMove.GameInProgress()         => ().pure[ConnectionIO]
+        case SuccessMove.GameFinished => gameRepository.setWinner(gameId, move.playerId)
+        case SuccessMove.GameInProgress         => ().pure[ConnectionIO]
       }
     } yield ()
 

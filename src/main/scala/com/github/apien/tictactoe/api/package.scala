@@ -1,6 +1,6 @@
 package com.github.apien.tictactoe
 
-import com.github.apien.tictactoe.domain.GameEngine.MoveError
+import com.github.apien.tictactoe.domain.GameEngine.{MoveError, SuccessMove}
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
 import com.github.apien.tictactoe.domain.model.{GameId, PlayerId}
 import io.circe.generic.extras.semiauto._
@@ -21,6 +21,11 @@ package object api {
   implicit val gamesFreeSlotEncoider = deriveEncoder[GameNoFreeSlot]
   implicit val gamesFreeSlotDecoder = deriveDecoder[GameNoFreeSlot]
 
+  implicit val moveErrorDecoder = deriveEnumerationDecoder[MoveError]
+  implicit val moveErrorEncoder = deriveEnumerationEncoder[MoveError]
+
+  implicit val moveSuccessDecoder = deriveEnumerationDecoder[SuccessMove]
+  implicit val moveSuccessEncoder = deriveEnumerationEncoder[SuccessMove]
 
   implicit val gameIdCodec: PlainCodec[GameId] = {
     def decode(rawValue: String): DecodeResult[GameId] =

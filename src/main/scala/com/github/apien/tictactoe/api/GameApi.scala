@@ -2,8 +2,7 @@ package com.github.apien.tictactoe.api
 
 import cats.effect.{ContextShift, IO}
 import cats.syntax.either._
-import com.github.apien.tictactoe.api.model.{CoordinateApiDto, GameApiDto, MoveErrorApiDto}
-import com.github.apien.tictactoe.domain.GameEngine.{MoveError, SuccessMove}
+import com.github.apien.tictactoe.api.model.{CoordinateApiDto, GameApiDto, MoveErrorApiDto, MoveSuccessApiDto}
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
 import com.github.apien.tictactoe.domain.GameService
@@ -49,32 +48,32 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
       }
   }
 
-  val makeMove: Endpoint[(GameId, PlayerId, CoordinateApiDto), Unit, Unit, Nothing] =
+  val makeMove: Endpoint[(GameId, PlayerId, CoordinateApiDto), MoveErrorApiDto, MoveSuccessApiDto, Nothing] =
     endpoint.put
-      .in("api" / "games" / path[GameId].description("Game id to join"))
+      .in("api" / "games" / path[GameId].description("It allows to make a move."))
       .in(header[PlayerId]("X-PLAYER-ID").description("Identifier of player received during game creation or joining to the game"))
       .in(jsonBody[CoordinateApiDto])
-      //      .errorOut(
-      //        oneOf[MoveError](
-      //          statusMapping(StatusCode.Conflict, jsonBody[MoveError.NotPlayerTurn].description("It is turn of second player"))
-      ////          statusMapping(StatusCode.Conflict, jsonBody[MoveError.NotPlayerTurn].description("It is turn of second player"))
-      ////          statusMapping(StatusCode.BadRequest, jsonBody[MoveError.GameDoesNotExist].description("Game has not free slot"))
-      //        )
-      //      )
-//      .errorOutput(
-//        oneOf[MoveErrorApiDto](
-//          statusMapping(StatusCode.Conflict, jsonBody[MoveErrorApiDto].description("It is turn of second player"))
-//        )
-//      )
+      .errorOut(
+        oneOf[MoveErrorApiDto](
+          statusMapping(
+            StatusCode.Conflict,
+            jsonBody[MoveErrorApiDto].description("Move can not make. For details please look on response.")
+          )
+        )
+      )
+      .out(
+        oneOf[MoveSuccessApiDto](
+          statusMapping(StatusCode.Ok, jsonBody[MoveErrorApiDto].description("Move has been made."))
+        )
+      )
 
-  val makeMoveRoutes = makeMove.toRoutes {
+  val makeMoveRoutes: HttpRoutes[IO] = makeMove.toRoutes {
     case (gameId, playerId, coordinateApiDto) =>
       gamesService
         .move(gameId, playerId, coordinateApiDto.toDomain)
         .map {
-//          case Left(error) => MoveErrorApiDto(error).asLeft
-          case Left(error) => ().asLeft
-          case Right(s)    => ().asRight
+          case Left(error)   => MoveErrorApiDto(error).asLeft
+          case Right(status) => MoveSuccessApiDto(status).asRight
         }
   }
 }

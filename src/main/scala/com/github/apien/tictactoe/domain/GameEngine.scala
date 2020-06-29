@@ -3,7 +3,6 @@ package com.github.apien.tictactoe.domain
 import cats.syntax.either._
 import com.github.apien.tictactoe.domain.GameEngine.{MoveError, SuccessMove}
 import com.github.apien.tictactoe.domain.model._
-import io.circe.generic.extras.semiauto.{deriveEnumerationDecoder, deriveEnumerationEncoder}
 
 /**
   * It implements of a game logic.
@@ -22,7 +21,7 @@ class GameEngine(game: Game, previousMoves: List[Move]) {
     */
   def makeMove(move: Move): Either[MoveError, SuccessMove] = {
     if (game.winner.isDefined)
-      MoveError.GameAlreadyFinished(game.winner.get).asLeft
+      MoveError.GameAlreadyFinished.asLeft
     else if (game.guest.isEmpty)
       MoveError.GameAwaitingForSecondPlayer.asLeft
     else internalMove(move)
@@ -46,7 +45,7 @@ class GameEngine(game: Game, previousMoves: List[Move]) {
     if (previousMoves.isEmpty || previousMoves.maxBy(_.dateTime).playerId != playerId)
       ().asRight
     else
-      MoveError.NotPlayerTurn().asLeft
+      MoveError.NotPlayerTurn.asLeft
 
   private def validateStateAfterMove(moves: List[Move], move: Move): SuccessMove = {
     def isRowFinishGame(row: Row): Boolean = {
@@ -72,9 +71,9 @@ class GameEngine(game: Game, previousMoves: List[Move]) {
       filteredMoves.size == BoardSize && filteredMoves.map(_.playerId).distinct.size == 1
 
     if (isColumnFinishGame(move.coordinate.col) || isRowFinishGame(move.coordinate.row) || isDiagonalsFinishGame)
-      SuccessMove.GameFinished(move.playerId)
+      SuccessMove.GameFinished
     else
-      SuccessMove.GameInProgress()
+      SuccessMove.GameInProgress
 
   }
 
@@ -106,13 +105,12 @@ object GameEngine {
     /**
       * Given move is valid but it did not finish the game.
       */
-    case class GameInProgress() extends SuccessMove
+    case object GameInProgress extends SuccessMove
 
     /**
       * Given move is valid and it did finish the game.
-      * @param playerId Identifier of the user which finished the game.
       */
-    case class GameFinished(playerId: PlayerId) extends SuccessMove
+    case object GameFinished extends SuccessMove
   }
 
   /**
@@ -121,14 +119,10 @@ object GameEngine {
   sealed trait MoveError
 
   object MoveError {
-
-    import io.circe._
-    import io.circe.generic.auto._
-    import io.circe.syntax._
     /**
       * It is not turn of the user. Other user needs to make move.
       */
-    case class NotPlayerTurn() extends MoveError
+    case object NotPlayerTurn extends MoveError
 
     /**
       * One of the player already selected the field in one of the previous move.
@@ -142,14 +136,10 @@ object GameEngine {
 
     /**
       * Player is not available to make the move because game has been finished
-      * @param playerId Id of user which finished game in previous move.
       */
-    case class GameAlreadyFinished(playerId: PlayerId) extends MoveError
+    case object GameAlreadyFinished extends MoveError
 
-    case class GameDoesNotExist() extends MoveError
-
-    implicit val successDecoder = deriveEnumerationDecoder[MoveError]
-    implicit val successsEncoder = deriveEnumerationEncoder[MoveError]
+    case object GameDoesNotExist extends MoveError
   }
 
 }

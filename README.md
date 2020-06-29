@@ -31,3 +31,11 @@ Application provides documentation of the Rest Api as Swagger. You can find it u
 | DB_USER | db.user | User name to PostgreSQL | - | john.doe |
 | DB_PASSWORD | db.password | PostgreSQL user's name | - | tajne |
 | DB_DATABASE | db.database | PostgreSQL database name | - | ttc |
+
+
+
+## TODO
+- Introduce tagged types and new type to represent configuration and domain objects
+- Make constrains on the database
+- Write back tests for the service logic
+- Set up a CI pipeline

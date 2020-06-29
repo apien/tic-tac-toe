@@ -2,12 +2,19 @@ package com.github.apien.tictactoe
 
 import com.github.apien.tictactoe.domain.GameEngine.{MoveError, SuccessMove}
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
-import com.github.apien.tictactoe.domain.model.{GameId, PlayerId}
+import com.github.apien.tictactoe.domain.model.{Column, GameId, PlayerId, Row}
+import io.circe.{Decoder, Encoder}
 import io.circe.generic.extras.semiauto._
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import sttp.tapir.Codec.PlainCodec
-import sttp.tapir.{Codec, DecodeResult}
+import sttp.tapir.{Codec, DecodeResult, Schema, Validator}
 package object api {
+
+  implicit val rowEncoder = deriveUnwrappedEncoder[Row]
+  implicit val rowDecoder = deriveUnwrappedDecoder[Row]
+
+  implicit val columnEncoder = deriveUnwrappedEncoder[Column]
+  implicit val columnDecoder = deriveUnwrappedDecoder[Column]
 
   implicit val gameIdEncoder = deriveUnwrappedEncoder[GameId]
   implicit val gameIdEDecoder = deriveUnwrappedDecoder[GameId]
@@ -40,4 +47,5 @@ package object api {
 
     Codec.string.mapDecode(decode)(_.value)
   }
+
 }

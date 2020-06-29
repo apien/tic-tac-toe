@@ -49,7 +49,7 @@ class GameEngineSpec extends TtcSpec {
     )
 
     engine.makeMove(Move(player2, Coordinate(Row(1), Column(1)), "2020-06-30T15:30:15.312")) shouldBe
-      MoveError.GameAlreadyFinished(player1).asLeft
+      MoveError.GameAlreadyFinished.asLeft
   }
 
   it should "return status when move has been made" in {
@@ -76,7 +76,7 @@ class GameEngineSpec extends TtcSpec {
     )
 
     engine.makeMove(Move(player1, Coordinate(Row(2), Column(0)), "2020-06-30T14:34:00.000")) shouldBe
-      SuccessMove.GameFinished(player1).asRight
+      SuccessMove.GameFinished.asRight
   }
 
   it should "return status when move finished the game (in given row)" in {
@@ -92,7 +92,7 @@ class GameEngineSpec extends TtcSpec {
     )
 
     engine.makeMove(Move(player1, Coordinate(Row(0), Column(2)), "2020-06-30T14:34:00.000")) shouldBe
-      SuccessMove.GameFinished(player1).asRight
+      SuccessMove.GameFinished.asRight
   }
 
   it should "return status when move finished the game (diagonal from left down cornet to top right)" in {
@@ -108,7 +108,7 @@ class GameEngineSpec extends TtcSpec {
     )
 
     engine.makeMove(Move(player1, Coordinate(Row(0), Column(2)), "2020-06-30T14:34:00.000")) shouldBe
-      SuccessMove.GameFinished(player1).asRight
+      SuccessMove.GameFinished.asRight
   }
 
   it should "return status when move finished the game (diagonal from left top cornet to down right)" in {
@@ -124,7 +124,7 @@ class GameEngineSpec extends TtcSpec {
     )
 
     engine.makeMove(Move(player1, Coordinate(Row(2), Column(2)), "2020-06-30T14:34:00.000")) shouldBe
-      SuccessMove.GameFinished(player1).asRight
+      SuccessMove.GameFinished.asRight
   }
 
   "GameEngine.leftDownDiagonalCoordinates" should "properly determine coordinates of top left diagonal" in {

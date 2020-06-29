@@ -2,7 +2,14 @@ package com.github.apien.tictactoe.api
 
 import cats.effect.{ContextShift, IO}
 import cats.syntax.either._
-import com.github.apien.tictactoe.api.model.{CoordinateApiDto, GameApiDto, MoveErrorApiDto, MoveSuccessApiDto}
+import com.github.apien.tictactoe.api.model.{
+  CoordinateApiDto,
+  GameApiDto,
+  InvalidInputData,
+  InvalidMoveErrorApiDto,
+  MoveErrorApiDto,
+  MoveSuccessApiDto
+}
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
 import com.github.apien.tictactoe.domain.GameService
@@ -12,7 +19,7 @@ import sttp.model.StatusCode
 import sttp.tapir._
 import sttp.tapir.json.circe._
 import sttp.tapir.server.http4s._
-
+import sttp.tapir.{statusMapping, _}
 class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
 
   val addGame: Endpoint[Unit, Unit, GameApiDto, Nothing] = endpoint.post
@@ -48,7 +55,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
       }
   }
 
-  val makeMove: Endpoint[(GameId, PlayerId, CoordinateApiDto), MoveErrorApiDto, MoveSuccessApiDto, Nothing] =
+  val makeMove: Endpoint[(GameId, PlayerId, CoordinateApiDto), MoveErrorApiDto, MoveSuccessApiDto, Nothing] = {
     endpoint.put
       .in("api" / "games" / path[GameId].description("It allows to make a move."))
       .in(header[PlayerId]("X-PLAYER-ID").description("Identifier of player received during game creation or joining to the game"))
@@ -57,23 +64,33 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
         oneOf[MoveErrorApiDto](
           statusMapping(
             StatusCode.Conflict,
-            jsonBody[MoveErrorApiDto].description("Move can not make. For details please look on response.")
+            jsonBody[InvalidMoveErrorApiDto].description("Move can not make. For details please look on response.")
+          ),
+          statusMapping(
+            StatusCode.BadRequest,
+            jsonBody[InvalidInputData].description("Invalid input data. Coordinate must belong to the range <0,2>")
           )
         )
       )
       .out(
         oneOf[MoveSuccessApiDto](
-          statusMapping(StatusCode.Ok, jsonBody[MoveErrorApiDto].description("Move has been made."))
+          statusMapping(StatusCode.Ok, jsonBody[MoveSuccessApiDto].description("Move has been made."))
         )
       )
+  }
 
   val makeMoveRoutes: HttpRoutes[IO] = makeMove.toRoutes {
     case (gameId, playerId, coordinateApiDto) =>
-      gamesService
-        .move(gameId, playerId, coordinateApiDto.toDomain)
-        .map {
-          case Left(error)   => MoveErrorApiDto(error).asLeft
-          case Right(status) => MoveSuccessApiDto(status).asRight
-        }
+      coordinateApiDto.toDomain match {
+        case None => IO(InvalidInputData().asLeft[MoveSuccessApiDto])
+        case Some(coordinate) =>
+          gamesService
+            .move(gameId, playerId, coordinate)
+            .map {
+              case Left(error)   => InvalidMoveErrorApiDto(error).asLeft
+              case Right(status) => MoveSuccessApiDto(status).asRight
+            }
+      }
+
   }
 }

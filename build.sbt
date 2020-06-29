@@ -47,3 +47,5 @@ scalacOptions ++= Seq(
   "-feature",
   "-Xfatal-warnings"
 )
+
+enablePlugins(FlywayPlugin)

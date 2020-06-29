@@ -14,9 +14,14 @@ player id. User receives token aka player id when he creates or joins to the gam
 
 ## Run 
 
-### Bash script
+### Set up docker container with PostgreSQL and apply migrations
 
-Directory `/bin/bash` contains the bash script to run a project with development configuration. It runs application on port 8080. 
+1. Go to `/bin` directory.
+2. Execute `set_up_local_env.sh` script which set up a docker container with PostgreSQL and apply schema migrations.
+
+### Run application
+
+Directory `/bin` contains the bash script to run a project with development configuration. It runs application on port 8080. 
 
 
 ## Swagger

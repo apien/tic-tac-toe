@@ -1,6 +1,7 @@
 package com.github.apien.tictactoe.api.model
 
 import com.github.apien.tictactoe.domain.model.{Column, Coordinate, Row}
+import io.circe.{Decoder, Encoder}
 
 case class CoordinateApiDto(row: Int, col: Int) {
 
@@ -18,7 +19,9 @@ object CoordinateApiDto {
   import com.github.apien.tictactoe.api.columnDecoder
   import com.github.apien.tictactoe.api.columnEncoder
 
-  implicit val decoder = deriveDecoder[CoordinateApiDto]
-  implicit val encoder = deriveEncoder[CoordinateApiDto]
+  implicit val decoder: Decoder[CoordinateApiDto] = deriveDecoder[CoordinateApiDto]
+  implicit val encoder: Encoder.AsObject[CoordinateApiDto] = deriveEncoder[CoordinateApiDto]
+
+  def fromDomain(domain: Coordinate): CoordinateApiDto = CoordinateApiDto(domain.row.value, domain.col.value)
 
 }

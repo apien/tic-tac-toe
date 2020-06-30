@@ -76,7 +76,20 @@ class GameService(gameRepository: GameRepository, moveRepository: MoveRepository
       }
 
     t1.transact(xa)
+  }
 
+  /**
+    * Get details about game and made already moves.
+    * @param gameId Identifier of demanded game.
+    * @return None if no such game.
+    */
+  def getGame(gameId: GameId): IO[Option[(Game, List[Move])]] = {
+    {
+      for {
+        gameOp <- gameRepository.findById(gameId)
+        moves <- moveRepository.getAllForGame(gameId)
+      } yield gameOp.map(game => game -> moves)
+    }.transact(xa)
   }
 
   /**
@@ -92,8 +105,8 @@ class GameService(gameRepository: GameRepository, moveRepository: MoveRepository
     for {
       _ <- moveRepository.insert(move)
       _ <- result match {
-        case SuccessMove.GameFinished => gameRepository.setWinner(gameId, move.playerId)
-        case SuccessMove.GameInProgress         => ().pure[ConnectionIO]
+        case SuccessMove.GameFinished   => gameRepository.setWinner(gameId, move.playerId)
+        case SuccessMove.GameInProgress => ().pure[ConnectionIO]
       }
     } yield ()
 

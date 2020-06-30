@@ -2,21 +2,13 @@ package com.github.apien.tictactoe.api
 
 import cats.effect.{ContextShift, IO}
 import cats.syntax.either._
-import com.github.apien.tictactoe.api.model.{
-  CoordinateApiDto,
-  GameApiDto,
-  InvalidInputData,
-  InvalidMoveErrorApiDto,
-  MoveErrorApiDto,
-  MoveSuccessApiDto
-}
+import com.github.apien.tictactoe.api.model._
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
 import com.github.apien.tictactoe.domain.GameService
 import com.github.apien.tictactoe.domain.model.{GameId, PlayerId}
 import org.http4s.HttpRoutes
 import sttp.model.StatusCode
-import sttp.tapir._
 import sttp.tapir.json.circe._
 import sttp.tapir.server.http4s._
 import sttp.tapir.{statusMapping, _}
@@ -91,6 +83,30 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
               case Right(status) => MoveSuccessApiDto(status).asRight
             }
       }
+  }
 
+  val getGame: Endpoint[GameId, GameNotExist, GameDetailsApiDto, Nothing] =
+    endpoint.get
+      .description("Get details of the game")
+      .in("api" / "games" / path[GameId].description("Game id"))
+      .errorOut(
+        oneOf[GameNotExist] {
+          statusMapping(
+            StatusCode.NotFound,
+            jsonBody[GameNotExist].description("Game does not exist")
+          )
+        }
+      )
+      .out(jsonBody[GameDetailsApiDto].description("Details of the game"))
+
+  val getGameRoutes: HttpRoutes[IO] = getGame.toRoutes { gameId =>
+    gamesService
+      .getGame(gameId)
+      .map { cos =>
+        cos.fold(GameNotExist().asLeft[GameDetailsApiDto]) {
+          case (game, moves) =>
+            GameDetailsApiDto.fromDomain(game, moves).asRight[GameNotExist]
+        }
+      }
   }
 }

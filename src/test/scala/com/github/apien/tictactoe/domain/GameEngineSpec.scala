@@ -52,6 +52,48 @@ class GameEngineSpec extends TtcSpec {
       MoveError.GameAlreadyFinished.asLeft
   }
 
+  it should "return error when more free fields left" in {
+    val game = Game(GameId("g1"), player1, player2.some, None)
+    val engine = new GameEngine(
+      game,
+      List(
+        Move(player1, Coordinate(Row(0), Column(0)), "2020-06-30T14:30:15.312"),
+        Move(player2, Coordinate(Row(1), Column(0)), "2020-06-30T14:31:15.312"),
+        Move(player1, Coordinate(Row(0), Column(1)), "2020-06-30T14:32:15.312"),
+        Move(player2, Coordinate(Row(1), Column(1)), "2020-06-30T14:33:15.312"),
+        Move(player1, Coordinate(Row(0), Column(2)), "2020-06-30T14:34:15.312"),
+        Move(player2, Coordinate(Row(1), Column(2)), "2020-06-30T14:35:15.312"),
+        Move(player1, Coordinate(Row(2), Column(0)), "2020-06-30T14:36:15.312"),
+        Move(player2, Coordinate(Row(2), Column(1)), "2020-06-30T14:37:15.312"),
+        Move(player1, Coordinate(Row(2), Column(2)), "2020-06-30T14:38:15.312"),
+      )
+    )
+
+    engine.makeMove(Move(player2, Coordinate(Row(1), Column(1)), "2020-06-30T15:30:15.312")) shouldBe
+      MoveError.NoMoreMoves.asLeft
+  }
+
+  it should "return information about finished game (there is a winner) when game finished and not more moves" in {
+    val game = Game(GameId("g1"), player1, player2.some, player1.some)
+    val engine = new GameEngine(
+      game,
+      List(
+        Move(player1, Coordinate(Row(0), Column(0)), "2020-06-30T14:30:15.312"),
+        Move(player2, Coordinate(Row(1), Column(0)), "2020-06-30T14:31:15.312"),
+        Move(player1, Coordinate(Row(0), Column(1)), "2020-06-30T14:32:15.312"),
+        Move(player2, Coordinate(Row(1), Column(1)), "2020-06-30T14:33:15.312"),
+        Move(player1, Coordinate(Row(0), Column(2)), "2020-06-30T14:34:15.312"),
+        Move(player2, Coordinate(Row(1), Column(2)), "2020-06-30T14:35:15.312"),
+        Move(player1, Coordinate(Row(2), Column(0)), "2020-06-30T14:36:15.312"),
+        Move(player2, Coordinate(Row(2), Column(1)), "2020-06-30T14:37:15.312"),
+        Move(player1, Coordinate(Row(2), Column(2)), "2020-06-30T14:38:15.312"),
+      )
+    )
+
+    engine.makeMove(Move(player2, Coordinate(Row(1), Column(1)), "2020-06-30T15:30:15.312")) shouldBe
+      MoveError.GameAlreadyFinished.asLeft
+  }
+
   it should "return status when move has been made" in {
     val game = Game(GameId("g1"), player1, player2.some, None)
     val engine = new GameEngine(

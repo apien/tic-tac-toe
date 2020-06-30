@@ -24,6 +24,8 @@ class GameEngine(game: Game, previousMoves: List[Move]) {
       MoveError.GameAlreadyFinished.asLeft
     else if (game.guest.isEmpty)
       MoveError.GameAwaitingForSecondPlayer.asLeft
+    else if (previousMoves.size >= GameEngine.BoardFields)
+      MoveError.NoMoreMoves.asLeft
     else internalMove(move)
   }
 
@@ -86,6 +88,8 @@ object GameEngine {
     */
   val BoardSize: Int = 3
 
+  val BoardFields: Int = BoardSize * BoardSize
+
   /**
     * Coordinates of diagonal from the top left corner.
     */
@@ -119,6 +123,7 @@ object GameEngine {
   sealed trait MoveError
 
   object MoveError {
+
     /**
       * It is not turn of the user. Other user needs to make move.
       */
@@ -135,11 +140,16 @@ object GameEngine {
     case object GameAwaitingForSecondPlayer extends MoveError
 
     /**
-      * Player is not available to make the move because game has been finished
+      * Player is not available to make the move because game has been finished. There is a winner!
       */
     case object GameAlreadyFinished extends MoveError
 
     case object GameDoesNotExist extends MoveError
+
+    /**
+      * All fields of the board has been taken so it end of the game.
+      */
+    case object NoMoreMoves extends MoveError
   }
 
 }

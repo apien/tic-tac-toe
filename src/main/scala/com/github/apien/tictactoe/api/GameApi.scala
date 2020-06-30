@@ -1,7 +1,7 @@
 package com.github.apien.tictactoe.api
 
 import cats.effect.{ContextShift, IO}
-import cats.syntax.either._
+import cats.implicits._
 import com.github.apien.tictactoe.api.model._
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError
 import com.github.apien.tictactoe.domain.GameRepository.PlayerJoinError.{GameNoFreeSlot, GameNotExist}
@@ -14,7 +14,7 @@ import sttp.tapir.server.http4s._
 import sttp.tapir.{statusMapping, _}
 class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
 
-  val addGame: Endpoint[Unit, Unit, GameApiDto, Nothing] = endpoint.post
+  private val addGame: Endpoint[Unit, Unit, GameApiDto, Nothing] = endpoint.post
     .description("Create a new game. It requires another user to join to start the play.")
     .in("api" / "games")
     .out(jsonBody[GameApiDto])
@@ -27,7 +27,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
       }
   }
 
-  val joinGame: Endpoint[GameId, PlayerJoinError, GameApiDto, Nothing] =
+  private val joinGame: Endpoint[GameId, PlayerJoinError, GameApiDto, Nothing] =
     endpoint.put
       .description("Allows to join to the existing game which awaits for second player")
       .in("api" / "games" / path[GameId].description("Game id to join") / "join")
@@ -47,7 +47,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
       }
   }
 
-  val makeMove: Endpoint[(GameId, PlayerId, CoordinateApiDto), MoveErrorApiDto, MoveSuccessApiDto, Nothing] = {
+  private val makeMove: Endpoint[(GameId, PlayerId, CoordinateApiDto), MoveErrorApiDto, MoveSuccessApiDto, Nothing] = {
     endpoint.put
       .in("api" / "games" / path[GameId].description("It allows to make a move."))
       .in(header[PlayerId]("X-PLAYER-ID").description("Identifier of player received during game creation or joining to the game"))
@@ -85,7 +85,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
       }
   }
 
-  val getGame: Endpoint[GameId, GameNotExist, GameDetailsApiDto, Nothing] =
+  private val getGame: Endpoint[GameId, GameNotExist, GameDetailsApiDto, Nothing] =
     endpoint.get
       .description("Get details of the game")
       .in("api" / "games" / path[GameId].description("Game id"))
@@ -109,4 +109,7 @@ class GameApi(gamesService: GameService)(implicit cs: ContextShift[IO]) {
         }
       }
   }
+
+  lazy val routes = addGameRoutes <+> joinGameRoutes <+> makeMoveRoutes <+> getGameRoutes
+  lazy val descriptions = List(addGame, joinGame, makeMove, getGame)
 }

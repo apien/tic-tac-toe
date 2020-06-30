@@ -44,15 +44,10 @@ object Server {
       gameService <- Stream(new GameService(gameRepository, moveRepository, tran))
       gameRouter <- Stream.apply(new GameApi(gameService))
 
-      openApiDocs: OpenAPI = List(gameRouter.addGame, gameRouter.joinGame, gameRouter.makeMove, gameRouter.getGame)
-        .toOpenAPI("The tapir library", "1.0.0")
+      openApiDocs: OpenAPI = gameRouter.descriptions.toOpenAPI("The tapir library", "1.0.0")
       openApiYml: String = openApiDocs.toYaml
 
-      routes = Router(
-        "/" -> (gameRouter.addGameRoutes <+> gameRouter.joinGameRoutes <+> gameRouter.makeMoveRoutes <+> gameRouter.getGameRoutes <+> new SwaggerHttp4s(
-          openApiYml
-        ).routes[IO])
-      ).orNotFound
+      routes = Router("/" -> (gameRouter.routes <+> new SwaggerHttp4s(openApiYml).routes[IO])).orNotFound
 
       exitCode <- BlazeServerBuilder[IO](global)
         .bindHttp(8080, "0.0.0.0")

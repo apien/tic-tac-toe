@@ -21,7 +21,7 @@ player id. User receives token aka player id when he creates or joins to the gam
 
 ### Run application
 
-Directory `/bin` contains the bash script to run a project with development configuration. It runs application on port 8080. 
+Directory `/bin` contains the bash script `run.sh` to run a project with development configuration. It runs application on port 8080. 
 
 
 ## Swagger
@@ -44,3 +44,4 @@ Application provides documentation of the Rest Api as Swagger. You can find it u
 - Make constrains on the database
 - Write back tests for the service logic
 - Set up a CI pipeline
+- Use Chimney to convert between domain api dto objects

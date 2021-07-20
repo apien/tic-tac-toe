@@ -18,7 +18,7 @@ class GameApiSpec extends TtcSpec with MockFactory {
 
   "GameApi create game" should "response OK with proper object" in {
     val gameServiceMock = mock[GameService]
-    (gameServiceMock.createNew _).expects().returning(IO("game1", "player1"))
+    (() => gameServiceMock.createNew).expects().returning(IO("game1", "player1"))
     val routes = new GameApi(gameServiceMock)
 
     val response = routes.addGameRoutes.orNotFound
@@ -172,25 +172,25 @@ class GameApiSpec extends TtcSpec with MockFactory {
       .returning(
         IO(
           (
-              Game(
-                GameId("g1"),
-                PlayerId("owner1"),
-                PlayerId("guest1").some,
-                PlayerId("owner1").some
+            Game(
+              GameId("g1"),
+              PlayerId("owner1"),
+              PlayerId("guest1").some,
+              PlayerId("owner1").some
+            ),
+            List(
+              Move(
+                "p1",
+                Coordinate(Row(1), Column(2)),
+                "2020-06-30T14:30:00.000"
               ),
-              List(
-                Move(
-                  "p1",
-                  Coordinate(Row(1), Column(2)),
-                  "2020-06-30T14:30:00.000"
-                ),
-                Move(
-                  "p2",
-                  Coordinate(Row(0), Column(1)),
-                  "2020-04-30T14:30:00.000"
-                )
+              Move(
+                "p2",
+                Coordinate(Row(0), Column(1)),
+                "2020-04-30T14:30:00.000"
               )
-            ).some
+            )
+          ).some
         )
       )
     val routes = new GameApi(gameServiceMock)
@@ -236,9 +236,9 @@ class GameApiSpec extends TtcSpec with MockFactory {
       .returning(
         IO(
           (
-              Game(GameId("g1"), PlayerId("owner1"), None, None),
-              Nil
-            ).some
+            Game(GameId("g1"), PlayerId("owner1"), None, None),
+            Nil
+          ).some
         )
       )
     val routes = new GameApi(gameServiceMock)

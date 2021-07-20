@@ -12,3 +12,11 @@ target/
 # Specific for Intellij IDEA
 .run
 .idea
+
+# Specific for metals and bloop
+.bloop
+.metals
+metals.sbt
+
+# Specific VS CODE
+.vscode
